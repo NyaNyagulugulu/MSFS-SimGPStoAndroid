@@ -50,20 +50,62 @@ gradlew assembleDebug
 
 ### 🖥️ 电脑端
 
-需要 Qt 6（Core、Gui、Widgets、Network）和 CMake。在 `CPP/MSFSSimConnect` 目录执行：
+电脑端使用 CMake + Qt 6（Core、Gui、Widgets、Network），不再需要 Visual Studio 工程文件。
 
-```text
-cmake -S . -B build
-cmake --build build
+#### 依赖
+
+- CMake 3.21 或更新版本
+- C++20 编译器（Linux：GCC / Clang；Windows：MSVC）
+- Qt 6.4 或更新版本，安装 `Core`、`Gui`、`Widgets`、`Network` 模块
+
+以 Debian / Ubuntu 为例：
+
+```bash
+sudo apt install build-essential cmake ninja-build qt6-base-dev
 ```
 
-在 Windows 上如需从本机 MSFS 读取数据，还需安装 SimConnect SDK，并在配置时指定其路径：
+#### 配置与构建
 
-```text
-cmake -S . -B build -DSIMCONNECT_SDK_DIR="D:/MSFS SDK/SimConnect SDK"
+从仓库根目录执行：
+
+```bash
+cmake -S CPP/MSFSSimConnect -B build/qt6 -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build/qt6
 ```
 
-Linux 构建提供 Qt 界面和 UDP 服务，但 MSFS/SimConnect 数据源仍需由 Windows 侧提供；项目不再依赖 Visual Studio 的 `.vcxproj` 作为主构建入口。
+不使用 Ninja 时，删除 `-G Ninja` 即可。生成的程序为：
+
+```text
+build/qt6/MSFS-SimConnect
+```
+
+#### 运行
+
+Linux / macOS：
+
+```bash
+./build/qt6/MSFS-SimConnect
+```
+
+Windows PowerShell：
+
+```powershell
+.\build\qt6\MSFS-SimConnect.exe
+```
+
+首次启动时，允许系统防火墙接收 UDP 36666（或你在界面中设置的端口）。如果出现 `The proxy type is invalid for this operation`，请重新构建并运行最新程序；UDP 服务已显式禁用 Qt 的 HTTP/SOCKS 代理。
+
+#### MSFS 数据源（Windows）
+
+在 Windows 上如需从本机 MSFS 读取数据，另需安装 SimConnect SDK，并在配置时指定 SDK 根目录：
+
+```powershell
+cmake -S CPP/MSFSSimConnect -B build/qt6 -G Ninja `
+  -DSIMCONNECT_SDK_DIR="D:/MSFS SDK/SimConnect SDK"
+cmake --build build/qt6
+```
+
+Linux 构建提供 Qt 界面和 UDP 服务；MSFS/SimConnect 本机数据源仍需要 Windows 与 SimConnect SDK。公网模式使用 IPv6 时，仍需在路由器或防火墙中手动放行对应 UDP 端口。
 
 
 

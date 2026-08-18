@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QNetworkDatagram>
+#include <QNetworkProxy>
 #include <QTimer>
 
 namespace {
@@ -10,6 +11,10 @@ constexpr qint64 kClientTimeoutMs = 15'000;
 }
 
 UdpServer::UdpServer(QObject *parent) : QObject(parent), m_heartbeat(new QTimer(this)) {
+    // UDP 服务端必须直连。本机/桌面环境若配置了 HTTP/SOCKS 代理，Qt 默认
+    // 代理会导致 bind() 报 "The proxy type is invalid for this operation"。
+    m_ipv4.setProxy(QNetworkProxy::NoProxy);
+    m_ipv6.setProxy(QNetworkProxy::NoProxy);
     connect(&m_ipv4, &QUdpSocket::readyRead, this, &UdpServer::readPendingDatagrams);
     connect(&m_ipv6, &QUdpSocket::readyRead, this, &UdpServer::readPendingDatagrams);
     connect(m_heartbeat, &QTimer::timeout, this, &UdpServer::sendHeartbeat);
