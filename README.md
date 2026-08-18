@@ -12,7 +12,7 @@
 - 🖥️ **电脑端可调**：数据刷新间隔（默认 50ms）、监听端口（默认 36666）均可自定义
 - 🎯 **平滑补偿**：手机端按可调频率（5~1000Hz，默认 25Hz）在真实帧之间做预测插值，航向/速度平滑系数可调，减少地图上的卡顿
 - 🪟 **状态悬浮窗**：半透明小卡片，显示状态、坐标、地速/空速、航向、高度与网络延迟，透明度可调，通知栏可一键开关
-- 🌐 **公网使用**：自动选择稳定的公网 IPv6；UPnP（IPv4 NAT）与 PCP（RFC 6887）自动尝试放行，路由器不支持时界面明确提示手动放行
+- 🌐 **公网使用**：Qt 6 版自动选择可用的公网 IPv6；使用公网前需在路由器或防火墙中手动放行 UDP 端口
 - ⚡ **网络延迟**：PONG 往返测量 + 平滑显示，局域网延迟稳定在个位数毫秒级
 
 ## 📲 使用
@@ -26,7 +26,7 @@
 ## ❓ 常见问题
 
 - 📡 局域网连接：手机与电脑需在同一网络；Windows 防火墙需放行 UDP 36666
-- 🌍 公网连接：需电脑有公网 IPv6；开启“公网使用”后程序自动尝试 UPnP/PCP 放行，若路由器不支持，请按界面提示在路由器后台手动放行 36666 端口
+- 🌍 公网连接：需电脑有公网 IPv6；开启“公网使用”后，按界面显示的 IPv6 地址连接，并在路由器或防火墙中手动放行端口
 - 🐢 位置卡顿：适当调低电脑端刷新间隔（如 50ms）或调高手机端注入频率
 
 ## 📁 项目结构
@@ -35,7 +35,7 @@
 MSFS-SimGPStoAndroid
 ├─ Android   (安卓手机端，包名 com.msfs.simconnect.client)
 └─ CPP
-   └─ MSFSSimConnect   (电脑端 Windows 程序，C++ / Win32)
+   └─ MSFSSimConnect   (电脑端 Qt 6 程序，C++ / Qt Widgets)
 ```
 
 ## 🔧 构建
@@ -50,14 +50,26 @@ gradlew assembleDebug
 
 ### 🖥️ 电脑端
 
-需要 Visual Studio（C++ 工具链）+ MSFS SimConnect SDK（头文件与导入库，项目默认指向 `D:\MSFS SDK\SimConnect SDK`）。打开 `CPP/MSFSSimConnect/MSFSSimConnect.slnx` 以 Release x64 构建。UPnP 依赖（miniupnpc）已内置在 `CPP/MSFSSimConnect/ThirdParty/miniupnpc`，无需额外下载。
+需要 Qt 6（Core、Gui、Widgets、Network）和 CMake。在 `CPP/MSFSSimConnect` 目录执行：
+
+```text
+cmake -S . -B build
+cmake --build build
+```
+
+在 Windows 上如需从本机 MSFS 读取数据，还需安装 SimConnect SDK，并在配置时指定其路径：
+
+```text
+cmake -S . -B build -DSIMCONNECT_SDK_DIR="D:/MSFS SDK/SimConnect SDK"
+```
+
+Linux 构建提供 Qt 界面和 UDP 服务，但 MSFS/SimConnect 数据源仍需由 Windows 侧提供；项目不再依赖 Visual Studio 的 `.vcxproj` 作为主构建入口。
 
 
 
 ## 🙏 参考与致谢
 
 - 模拟定位与悬浮窗思路参考 [ZCShou/GoGoGo（影梭）](https://github.com/ZCShou/GoGoGo)
-- UPnP 使用 [miniupnpc](https://github.com/miniupnp/miniupnpc)（BSD 协议，见 `CPP/MSFSSimConnect/ThirdParty/miniupnpc/LICENSE`）
 - 本项目基于 [sunmutian88/msfs_map](https://github.com/sunmutian88/msfs_map) 修改而来
 
 ## 🍋 支持
