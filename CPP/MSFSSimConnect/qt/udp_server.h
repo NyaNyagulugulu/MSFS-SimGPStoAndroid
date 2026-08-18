@@ -6,6 +6,8 @@
 #include <QList>
 #include <QUdpSocket>
 
+class QTimer;
+
 class UdpServer final : public QObject {
     Q_OBJECT
 public:

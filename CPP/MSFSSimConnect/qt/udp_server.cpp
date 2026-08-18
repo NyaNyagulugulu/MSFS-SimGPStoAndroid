@@ -71,7 +71,7 @@ void UdpServer::readPendingDatagrams() {
                 socket->writeDatagram("SERVER_FULL", datagram.senderAddress(), datagram.senderPort());
                 continue;
             }
-            it = m_clients.insert(key, {datagram.senderAddress(), datagram.senderPort(), now});
+            it = m_clients.insert(key, {datagram.senderAddress(), static_cast<quint16>(datagram.senderPort()), now});
             emit clientCountChanged(m_clients.size());
             emit message(tr("客户端已连接：%1").arg(key));
         } else it->lastHelloMs = now;
