@@ -107,6 +107,52 @@ cmake --build build/qt6
 
 Linux 构建提供 Qt 界面和 UDP 服务；MSFS/SimConnect 本机数据源仍需要 Windows 与 SimConnect SDK。公网模式使用 IPv6 时，仍需在路由器或防火墙中手动放行对应 UDP 端口。
 
+#### Linux + Wine 连接 MSFS
+
+SimConnect 是 Windows API，Linux 主程序不能直接加载它。项目会在 Linux 上启动一个 Windows 桥接程序：桥接程序在 MSFS 使用的 Proton/Wine 环境内连接 SimConnect，并只通过 `127.0.0.1` 的 UDP 将飞行数据回传给 Linux Qt 主程序。
+
+先在具有 Windows 工具链和 SimConnect SDK 的环境构建桥接程序：
+
+```powershell
+cmake -S CPP/MSFSSimConnect -B build/win -G Ninja `
+  -DSIMCONNECT_SDK_DIR="D:/MSFS SDK/SimConnect SDK"
+cmake --build build/win --target MSFS-SimConnect-WineBridge
+```
+
+如果 Linux 上已安装 MinGW-w64，也可以直接使用项目脚本构建桥接程序；该路径不需要 SimConnect SDK 的头文件和 `.lib`，运行时会加载 MSFS 自带的 `SimConnect_internal.dll`：
+
+```bash
+tools/build-wine-bridge.sh
+```
+
+如果交叉编译器不在 `PATH`，可以指定：
+
+```bash
+MINGW_CXX=/path/to/x86_64-w64-mingw32-g++ tools/build-wine-bridge.sh
+```
+
+生成的 `build/wine/MSFS-SimConnect-WineBridge.exe` 可复制到 Linux 主程序同目录。
+
+将生成的 `MSFS-SimConnect-WineBridge.exe` 复制到 Linux 的 `MSFS-SimConnect` 可执行文件同目录，然后启动 Linux 主程序即可。若桥接程序位于其他位置，显式指定路径：
+
+```bash
+export MSFS_SIMCONNECT_BRIDGE="/absolute/path/MSFS-SimConnect-WineBridge.exe"
+./build/qt6/MSFS-SimConnect
+```
+
+Linux 程序默认会自动查找 Steam 库、MSFS 2024 的 AppID `2537590`、对应的 `compatdata/2537590/pfx` 和已安装的 Proton。这样桥接程序不会误用独立的 `~/.wine` 环境。
+
+如果自动探测不到，也可以通过环境变量覆盖：
+
+```bash
+export MSFS_STEAM_APP_ID="2537590"
+export MSFS_COMPAT_DATA_PATH="$HOME/.steam/debian-installation/steamapps/compatdata/2537590"
+export MSFS_PROTON_COMMAND="$HOME/.steam/debian-installation/steamapps/common/Proton - Experimental/proton"
+./build/qt6/MSFS-SimConnect
+```
+
+桥接程序与 MSFS 必须使用同一个 Proton/Wine 前缀。Qt 界面显示“已通过 MSFS Proton 连接到 SimConnect”后，即代表数据通道已建立。
+
 
 
 ## 🙏 参考与致谢

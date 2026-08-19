@@ -4,6 +4,8 @@
 #include <QString>
 
 class QTimer;
+class QUdpSocket;
+class QProcess;
 
 struct FlightData {
     double latitude = 0, longitude = 0, altitude = 0, heading = 0;
@@ -24,5 +26,8 @@ private:
     QTimer *m_timer;
 #ifdef HAVE_SIMCONNECT
     void *m_handle = nullptr;
+#else
+    QUdpSocket *m_wineSocket = nullptr;
+    QProcess *m_wineProcess = nullptr;
 #endif
 };
